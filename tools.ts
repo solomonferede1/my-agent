@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { simpleGit } from "simple-git";
 import { z } from "zod";
+import fs from "fs";
 
 const excludeFiles = ["dist", "bun.lock"];
 
@@ -28,4 +29,25 @@ export const getFileChangesInDirectoryTool = tool({
   description: "Gets the code changes made in given directory",
   inputSchema: fileChange,
   execute: getFileChangesInDirectory,
+});
+
+const markdownFileSchema = z.object({
+	filePath: z.string().min(1).describe("The path for the markdown file"),
+	content: z.string().min(1).describe("The content for the markdown file"),
+});
+
+type MarkdownFile = z.infer<typeof markdownFileSchema>;
+
+function createMarkdownFile({ filePath, content }: MarkdownFile) {
+	if (!filePath.endsWith(".md")) {
+		throw new Error("File path must end with .md");
+	}
+	fs.writeFileSync(filePath, content);
+	return `File ${filePath} created successfully`;
+}
+
+export const createMarkdownFileTool = tool({
+	description: "Creates a markdown file with the given content",
+	inputSchema: markdownFileSchema,
+	execute: createMarkdownFile,
 });
